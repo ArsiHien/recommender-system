@@ -109,7 +109,7 @@ export default function Header() {
                     Enter your user ID to login
                   </SheetDescription>
                 </SheetHeader>
-                <form onSubmit={handleLogin} className="mt-6 space-y-4">
+                <form onSubmit={handleLogin} className="mt-6 px-4 space-y-4">
                   <div className="space-y-2">
                     <Input
                       id="userId"

@@ -226,15 +226,11 @@ export async function getProducts(): Promise<Product[]> {
   return Promise.resolve(mockProducts);
 }
 
-// Function to get recommended products (simulating second database connection)
 export async function getRecommendedProducts(): Promise<Product[]> {
-  // In a real app, this would fetch from a different database
   return Promise.resolve(mockRecommendedProducts);
 }
 
-// Function to get a product by ID
 export async function getProductById(id: string): Promise<Product | null> {
-  // In a real app, this would fetch from a database
   const allProducts = [...mockProducts, ...mockRecommendedProducts];
   const product = allProducts.find((p) => p.parent_asin === id);
   return Promise.resolve(product || null);
