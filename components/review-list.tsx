@@ -1,13 +1,64 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { Review } from "@/types/review";
 
 interface ReviewListProps {
-  reviews: Review[];
+  productId: string;
+  initialReviews?: Review[];
 }
 
-export function ReviewList({ reviews }: ReviewListProps) {
+export function ReviewList({
+  productId,
+  initialReviews = [],
+}: ReviewListProps) {
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/reviews?productId=${productId}`);
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setReviews(data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [productId]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-1/4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-1/3 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div className="h-16 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (reviews.length === 0) {
     return (
       <div className="text-center py-8">

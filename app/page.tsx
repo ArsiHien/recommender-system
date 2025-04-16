@@ -1,27 +1,15 @@
-import { ProductCard } from "@/components/product-card";
-import { getProducts, getRecommendedProducts } from "@/lib/products";
+import { ProductCard } from "@/components/product-card"
+import { RecommendedProducts } from "@/components/recommended-products"
+import { getProducts } from "@/lib/products"
 
 export default async function Home() {
-  // Fetch products from both databases
-  const products = await getProducts();
-  const recommendedProducts = await getRecommendedProducts();
+  // Chỉ tải dữ liệu sản phẩm chung
+  const products = await getProducts(25)
 
   return (
     <div className="space-y-12">
-      {recommendedProducts.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold tracking-tight">
-              Recommended For You
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {recommendedProducts.map((product) => (
-              <ProductCard key={product.parent_asin} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* RecommendedProducts sẽ tự tải dữ liệu khi biết userId */}
+      <RecommendedProducts />
 
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -34,5 +22,5 @@ export default async function Home() {
         </div>
       </section>
     </div>
-  );
+  )
 }

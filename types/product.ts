@@ -1,4 +1,5 @@
 export interface Product {
+  _id: string;
   main_category?: string;
   title: string;
   average_rating?: number;
@@ -19,7 +20,7 @@ export interface Product {
   };
   store?: string;
   categories?: string[];
-  details?: string;
+  details?: Record<string, string>;
   parent_asin: string;
   bought_together?: string | null;
   subtitle?: string | null;

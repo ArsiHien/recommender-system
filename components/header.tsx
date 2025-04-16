@@ -23,6 +23,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Tạo một event để thông báo khi trạng thái đăng nhập thay đổi
+export const loginStatusChanged = () => {
+  // Sử dụng CustomEvent để thông báo cho các component khác
+  const event = new CustomEvent("loginStatusChanged");
+  window.dispatchEvent(event);
+};
+
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState("");
@@ -46,6 +53,9 @@ export default function Header() {
       localStorage.setItem("userId", userId);
       setIsLoggedIn(true);
       setUserId(userId);
+
+      // Thông báo trạng thái đăng nhập đã thay đổi
+      loginStatusChanged();
     }
   };
 
@@ -53,6 +63,10 @@ export default function Header() {
     localStorage.removeItem("userId");
     setIsLoggedIn(false);
     setUserId("");
+
+    loginStatusChanged();
+
+    router.push("/");
   };
 
   return (

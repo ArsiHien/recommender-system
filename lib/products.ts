@@ -1,181 +1,55 @@
 import type { Product } from "@/types/product";
+import clientPromise from "./db";
+import { ObjectId } from "mongodb";
 
-// Mock data for products
-const mockProducts: Product[] = [
-  {
-    main_category: "All Beauty",
-    title: "Howard LC0008 Leather Conditioner, 8-Ounce (4-Pack)",
-    average_rating: 4.8,
-    rating_number: 10,
-    features: [],
-    description: [],
-    price: "39.99",
-    images: {
-      hi_res: [
-        null,
-        "https://m.media-amazon.com/images/I/71i77AuI9xL._SL1500_.jpg",
-      ],
-      large: [
-        "https://m.media-amazon.com/images/I/41qfjSfqNyL.jpg",
-        "https://m.media-amazon.com/images/I/41w2yznfuZL.jpg",
-      ],
-      thumb: [
-        "https://m.media-amazon.com/images/I/41qfjSfqNyL._SS40_.jpg",
-        "https://m.media-amazon.com/images/I/41w2yznfuZL._SS40_.jpg",
-      ],
-      variant: ["MAIN", "PT01"],
-    },
-    videos: { title: [], url: [], user_id: [] },
-    store: "Howard Products",
-    categories: [],
-    details:
-      '{"Package Dimensions": "7.1 x 5.5 x 3 inches; 2.38 Pounds", "UPC": "617390882781"}',
-    parent_asin: "B01CUPMQZE",
-    bought_together: null,
-    subtitle: null,
-    author: null,
-  },
-  {
-    main_category: "Beauty & Personal Care",
-    title: "Premium Hair Styling Spray",
-    average_rating: 4.5,
-    rating_number: 128,
-    features: ["Long-lasting hold", "No sticky residue", "Pleasant scent"],
-    description: [
-      "Our premium hair styling spray provides all-day hold without the stiffness or stickiness of other products.",
-    ],
-    price: "24.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Beauty Essentials",
-    parent_asin: "B00YQ6X8EO",
-  },
-  {
-    main_category: "Electronics",
-    title: "Wireless Noise-Cancelling Headphones",
-    average_rating: 4.7,
-    rating_number: 352,
-    features: [
-      "Active noise cancellation",
-      "40-hour battery life",
-      "Premium sound quality",
-    ],
-    description: [
-      "Experience immersive sound with our wireless noise-cancelling headphones.",
-    ],
-    price: "199.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "AudioTech",
-    parent_asin: "B07XFJC9VR",
-  },
-  {
-    main_category: "Home & Kitchen",
-    title: "Stainless Steel Coffee Maker",
-    average_rating: 4.3,
-    rating_number: 89,
-    features: ["Programmable timer", "Keep-warm function", "Easy to clean"],
-    description: [
-      "Start your day right with our premium stainless steel coffee maker.",
-    ],
-    price: "79.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Kitchen Essentials",
-    parent_asin: "B08KFMJ91F",
-  },
-  {
-    main_category: "Clothing",
-    title: "Men's Casual Cotton T-Shirt",
-    average_rating: 4.2,
-    rating_number: 215,
-    features: ["100% cotton", "Machine washable", "Comfortable fit"],
-    description: ["Classic cotton t-shirt perfect for everyday wear."],
-    price: "19.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Fashion Basics",
-    parent_asin: "B09DFLK7QP",
-  },
-  {
-    main_category: "Sports & Outdoors",
-    title: "Yoga Mat with Carrying Strap",
-    average_rating: 4.6,
-    rating_number: 178,
-    features: [
-      "Non-slip surface",
-      "Eco-friendly materials",
-      "Extra thick padding",
-    ],
-    description: ["Perfect for yoga, pilates, and other floor exercises."],
-    price: "34.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Fitness Gear",
-    parent_asin: "B07ZRC9T8S",
-  },
-  {
-    main_category: "Books",
-    title: "The Art of Mindful Living",
-    average_rating: 4.8,
-    rating_number: 423,
-    features: [],
-    description: [
-      "A comprehensive guide to incorporating mindfulness into your daily routine.",
-    ],
-    price: "15.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Book Haven",
-    parent_asin: "B06XC9JZMR",
-    author: "Sarah Johnson",
-  },
-  {
-    main_category: "Toys & Games",
-    title: "Educational Building Blocks Set",
-    average_rating: 4.9,
-    rating_number: 156,
-    features: [
-      "100 pieces",
-      "Compatible with major brands",
-      "Develops creativity and motor skills",
-    ],
-    description: [
-      "Colorful building blocks perfect for children ages 3 and up.",
-    ],
-    price: "29.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Toy World",
-    parent_asin: "B08QJNKPFR",
-  },
-];
+export async function getProducts(limit = 10, skip = 0): Promise<Product[]> {
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  const collection = db.collection("products");
 
-// Mock recommended products
+  const products = await collection.find({}).skip(skip).limit(limit).toArray();
+
+  // Properly cast the MongoDB documents to your Product type
+  return products.map(
+    (product) =>
+      ({
+        ...product,
+        _id: product._id.toString(), // Convert ObjectId to string if needed
+      } as unknown as Product)
+  );
+}
+
+export async function getRecommendedProductsForUser(userId?: string): Promise<Product[]> {
+
+  try {
+    // Nếu không có userId, không trả về đề xuất nào
+    if (!userId) {
+      return []
+    }
+
+    console.log(`Fetching recommendations for user: ${userId}`)
+
+    // Trong ứng dụng thực tế:
+    // return await recommendationsConnection.query('SELECT * FROM recommendations WHERE user_id = ?', [userId])
+
+    // Mô phỏng việc lấy đề xuất dựa trên userId
+    // Trong thực tế, bạn sẽ có logic phức tạp hơn để lấy đề xuất phù hợp
+    return mockRecommendedProducts
+  } catch (error) {
+    console.error("Error fetching recommended products:", error)
+    return []
+  }
+}
+
 const mockRecommendedProducts: Product[] = [
   {
+    _id: "1",
     main_category: "Electronics",
     title: "Wireless Earbuds with Charging Case",
     average_rating: 4.6,
     rating_number: 287,
     features: ["Bluetooth 5.0", "Touch controls", "20-hour battery life"],
-    description: [
-      "Experience premium sound quality with our wireless earbuds.",
-    ],
+    description: ["Experience premium sound quality with our wireless earbuds."],
     price: "59.99",
     images: {
       large: ["/placeholder.svg?height=300&width=300"],
@@ -185,15 +59,12 @@ const mockRecommendedProducts: Product[] = [
     parent_asin: "B09FGXHVDZ",
   },
   {
+    _id: "2",
     main_category: "Home & Kitchen",
     title: "Smart LED Light Bulbs (4-Pack)",
     average_rating: 4.4,
     rating_number: 132,
-    features: [
-      "Voice control compatible",
-      "Adjustable brightness",
-      "Energy efficient",
-    ],
+    features: ["Voice control compatible", "Adjustable brightness", "Energy efficient"],
     description: ["Transform your home lighting with our smart LED bulbs."],
     price: "39.99",
     images: {
@@ -204,6 +75,7 @@ const mockRecommendedProducts: Product[] = [
     parent_asin: "B07WNRN9WQ",
   },
   {
+    _id: "3",
     main_category: "Beauty & Personal Care",
     title: "Natural Vitamin C Serum",
     average_rating: 4.7,
@@ -218,20 +90,138 @@ const mockRecommendedProducts: Product[] = [
     store: "Natural Beauty",
     parent_asin: "B07TQNMXFR",
   },
-];
+]
 
-// Function to get all products (simulating database connection)
-export async function getProducts(): Promise<Product[]> {
-  // In a real app, this would fetch from a database
-  return Promise.resolve(mockProducts);
-}
 
-export async function getRecommendedProducts(): Promise<Product[]> {
-  return Promise.resolve(mockRecommendedProducts);
-}
+// export async function getRecommendedProducts(
+//   limit = 10,
+//   userId?: string
+// ): Promise<Product[]> {
+//   const client = await clientPromise;
+//   const db = client.db("ecommerce");
+//   const productsCollection = db.collection("products");
 
+//   // If userId is provided, try to get user-specific recommendations
+//   if (userId) {
+//     try {
+//       const recommendationsCollection = db.collection("recommendations");
+//       const userRecommendation = await recommendationsCollection.findOne({
+//         _id: userId,
+//       });
+
+//       if (
+//         userRecommendation &&
+//         userRecommendation.recommended_asins &&
+//         userRecommendation.recommended_asins.length > 0
+//       ) {
+//         // Use user-specific recommendations if available
+//         const productIds = userRecommendation.recommended_asins.slice(0, limit);
+
+//         const recommendedProducts = await productsCollection
+//           .find({ _id: { $in: productIds } })
+//           .toArray();
+
+//         return recommendedProducts.map(
+//           (product) =>
+//             ({
+//               ...product,
+//               _id: product._id.toString(),
+//             } as unknown as Product)
+//         );
+//       }
+//     } catch (error) {
+//       console.error("Error fetching user-specific recommendations:", error);
+//       // Fall back to default recommendations if there's an error
+//     }
+//   }
+
+//   // Default to featured/recommended products if no user-specific recommendations
+//   const recommendedProducts = await productsCollection
+//     .find({
+//       $or: [{ featured: true }, { recommended: true }],
+//     })
+//     .limit(limit)
+//     .toArray();
+
+//   return recommendedProducts.map(
+//     (product) =>
+//       ({
+//         ...product,
+//         _id: product._id.toString(),
+//       } as unknown as Product)
+//   );
+// }
 export async function getProductById(id: string): Promise<Product | null> {
-  const allProducts = [...mockProducts, ...mockRecommendedProducts];
-  const product = allProducts.find((p) => p.parent_asin === id);
-  return Promise.resolve(product || null);
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  const collection = db.collection("products");
+
+  try {
+    // Handle both ObjectId and string _id
+    let query = {};
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      // If the ID looks like a valid ObjectId
+      query = { _id: new ObjectId(id) };
+    } else {
+      // If it's a string ID like 'B01CUPMQZE'
+      query = { _id: id };
+    }
+
+    const product = await collection.findOne(query);
+
+    if (!product) {
+      return null;
+    }
+
+    // Properly cast the MongoDB document to your Product type
+    return {
+      ...product,
+      _id: product._id.toString(), // Convert ObjectId to string if needed
+    } as unknown as Product;
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
+    return null;
+  }
+}
+
+// New function to get recommended products for a specific product
+export async function getRecommendedProductsById(
+  id: string,
+  limit = 10
+): Promise<Product[]> {
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  const recommendationsCollection = db.collection("recommendations");
+  const productsCollection = db.collection("products");
+
+  try {
+    // Find recommendations for this product
+    const recommendation = await recommendationsCollection.findOne({ _id: id });
+
+    if (
+      !recommendation ||
+      !recommendation.recommended_asins ||
+      recommendation.recommended_asins.length === 0
+    ) {
+      return [];
+    }
+
+    // Fetch the recommended products (limited to specified number)
+    const recommendedAsins = recommendation.recommended_asins.slice(0, limit);
+
+    const recommendedProducts = await productsCollection
+      .find({ _id: { $in: recommendedAsins } })
+      .toArray();
+
+    return recommendedProducts.map(
+      (product) =>
+        ({
+          ...product,
+          _id: product._id.toString(),
+        } as unknown as Product)
+    );
+  } catch (error) {
+    console.error("Error fetching recommended products:", error);
+    return [];
+  }
 }

@@ -6,7 +6,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getProductById } from "@/lib/products";
-import { getProductReviews } from "@/lib/reviews";
 import { ReviewList } from "@/components/review-list";
 import { AddReviewForm } from "@/components/add-review-form";
 
@@ -22,8 +21,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) {
     notFound();
   }
-
-  const reviews = await getProductReviews(params.id);
 
   // Get the first high-res image or fallback to large or placeholder
   const mainImage =
@@ -129,7 +126,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <Badge variant="secondary">{product.main_category}</Badge>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Button size="lg" className="flex-1">
               Add to Cart
             </Button>
@@ -172,7 +169,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <Tabs defaultValue="description">
         <TabsList>
           <TabsTrigger value="description">Description</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
         </TabsList>
         <TabsContent value="description" className="py-4">
           {product.description && product.description.length > 0 ? (
@@ -190,7 +187,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <TabsContent value="reviews" className="py-4">
           <div className="space-y-8">
             <AddReviewForm productId={params.id} />
-            <ReviewList reviews={reviews} />
+            <ReviewList productId={params.id} />
           </div>
         </TabsContent>
       </Tabs>
