@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "User ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching recommendations:", error);
     return NextResponse.json(
       { error: "Failed to fetch recommendations" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

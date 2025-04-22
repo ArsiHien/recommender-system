@@ -5,7 +5,7 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, User, LogOut, Search } from "lucide-react";
+import { ShoppingCart, User, LogOut, Search, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -101,6 +101,10 @@ export default function Header() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem className="font-medium">
                   User ID: {userId}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/my-reviews")}>
+                  <Star className="mr-2 h-4 w-4" />
+                  <span>My Reviews</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />

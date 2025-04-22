@@ -38,7 +38,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   let details = {};
   try {
     if (product.details) {
-      details = JSON.parse(product.details);
+      details = product.details;
     }
   } catch (e) {
     console.error("Failed to parse product details", e);

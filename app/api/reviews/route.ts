@@ -1,4 +1,4 @@
-import { getProductReviews, addReview } from "@/lib/reviews"
+import { getProductReviews, addReview, getUserReviews } from "@/lib/reviews"
 import { type NextRequest, NextResponse } from "next/server"
 import type { Review } from "@/types/review"
 
@@ -6,12 +6,20 @@ export async function GET(request: NextRequest) {
   try {
     // Lấy productId từ query params
     const productId = request.nextUrl.searchParams.get("productId")
+    const userId = request.nextUrl.searchParams.get("userId")
 
-    if (!productId) {
-      return NextResponse.json({ error: "Product ID is required" }, { status: 400 })
+    if (!productId && !userId) {
+      return NextResponse.json({ error: "Either Product ID or User ID is required" }, { status: 400 })
     }
 
-    const reviews = await getProductReviews(productId)
+    let reviews: Review[] = []
+
+    if (productId) {
+      reviews = await getProductReviews(productId);
+    } else if (userId) {
+      reviews = await getUserReviews(userId);
+    }
+
     return NextResponse.json(reviews)
   } catch (error) {
     console.error("Error fetching reviews:", error)

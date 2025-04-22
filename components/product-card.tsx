@@ -11,14 +11,14 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   // Get the first image or use a placeholder
-  const imageUrl = product.images?.large?.[0] || "https://placehold.co/600x400";
+  const imageUrl = product.images?.large?.[0];
 
   return (
     <Link href={`/product/${product.parent_asin}`}>
       <Card className="h-full overflow-hidden transition-all hover:shadow-md">
         <div className="aspect-square overflow-hidden">
           <Image
-            src={imageUrl || "/placeholder.svg"}
+            src={imageUrl || "https://picsum.photos/200"}
             alt={product.title}
             width={300}
             height={300}
