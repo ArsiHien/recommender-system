@@ -2,6 +2,11 @@ import type { Product } from "@/types/product";
 import clientPromise from "./db";
 import { ObjectId } from "mongodb";
 
+interface Recommendation {
+  _id: string; // userId dạng string
+  recommended_asins: string[];
+}
+
 export async function getProducts(limit = 10, skip = 0): Promise<Product[]> {
   const client = await clientPromise;
   const db = client.db("ecommerce");
@@ -62,9 +67,9 @@ export async function getRecommendationsForUser(
   const db = client.db("ecommerce");
 
   try {
-    const recommendation = await db
-      .collection("recommendations")
-      .findOne({ _id: new ObjectId(userId) });
+    const collection = db.collection<Recommendation>("recommendations");
+
+    const recommendation = await collection.findOne({ _id: userId });
 
     if (!recommendation || !recommendation.recommended_asins) {
       return [];
@@ -105,18 +110,9 @@ export async function getRecommendedProductsForUser(
       return [];
     }
 
-    const objectIds = paginatedAsins
-      .filter((asin) => ObjectId.isValid(asin)) // Filter out invalid ObjectIds
-      .map((asin) => new ObjectId(asin));
-
-    if (objectIds.length === 0) {
-      console.warn("No valid ObjectIds provided for product query");
-      return [];
-    }
-
     const products = await db
-      .collection("products")
-      .find({ _id: { $in: objectIds } })
+      .collection<Product>("products")
+      .find({ _id: { $in: paginatedAsins } })
       .toArray();
 
     // Sắp xếp lại theo thứ tự trong recommendedAsins
