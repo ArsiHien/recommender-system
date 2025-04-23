@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { Review } from "@/types/review";
+import Image from "next/image";
 
 interface ReviewListProps {
   productId: string;
@@ -112,7 +113,7 @@ export function ReviewList({
             <div className="flex gap-2 mt-2">
               {review.images.map((image, i) => (
                 <div key={i} className="h-20 w-20 rounded-md overflow-hidden">
-                  <img
+                  <Image
                     src={image || "/placeholder.svg"}
                     alt={`Review image ${i + 1}`}
                     className="h-full w-full object-cover"

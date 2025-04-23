@@ -65,6 +65,7 @@ export function RecommendedProducts() {
     return () => {
       window.removeEventListener("loginStatusChanged", handleLoginStatusChange);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Nếu không đăng nhập hoặc không có sản phẩm đề xuất và không đang tải, không hiển thị gì
