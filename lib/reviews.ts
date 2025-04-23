@@ -49,6 +49,15 @@ export async function getUserReviews(
     return reviews.map((review) => ({
       ...review,
       _id: review._id.toString(),
+      rating: review.rating || 0,
+      text: review.text || "",
+      images: review.images || [],
+      asin: review.asin || "",
+      parent_asin: review.parent_asin || "",
+      user_id: review.user_id || "",
+      timestamp: review.timestamp || Date.now(),
+      helpful_vote: review.helpful_vote || 0,
+      verified_purchase: review.verified_purchase || false,
     }));
   } catch (error) {
     console.error("Error fetching user reviews:", error);
@@ -91,7 +100,7 @@ export async function enhanceReviewsWithProductInfo(
   console.log("products", products);
 
   // Create a map for quick lookup
-  const productMap = products.reduce((map, product) => {
+  const productMap: Record<string, { title: string; image: string }> = products.reduce((map: Record<string, { title: string; image: string }>, product) => {
     // Get the first hi_res image or first large image or a placeholder
     const productImage =
       (product.images?.hi_res && product.images.hi_res.filter(Boolean)[0]) ||

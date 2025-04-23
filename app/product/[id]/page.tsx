@@ -8,19 +8,21 @@ import { Button } from "@/components/ui/button";
 import { getProductById } from "@/lib/products";
 import { ReviewList } from "@/components/review-list";
 import { AddReviewForm } from "@/components/add-review-form";
-import { Metadata } from "next";
+import { Metadata, NextPage } from "next";
 
-// Define props type
+// Define props type with params and searchParams as Promises
 interface ProductPageProps {
-  params: { id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams?:
+    | Promise<{ [key: string]: string | string[] | undefined }>
+    | undefined;
 }
 
 // Generate dynamic metadata
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = await params; // Await params to access id
   const product = await getProductById(id);
 
   if (!product) {
@@ -57,8 +59,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { id } = await params;
+// Define the page component with explicit NextPage typing
+const ProductPage: NextPage<ProductPageProps> = async ({ params }) => {
+  const { id } = await params; // Await params to access id
   const product = await getProductById(id);
 
   if (!product) {
@@ -237,4 +240,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </Tabs>
     </div>
   );
-}
+};
+
+export default ProductPage;
