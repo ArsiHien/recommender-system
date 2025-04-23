@@ -1,10 +1,11 @@
 import type { Review } from "@/types/review";
 import clientPromise from "./db";
 import { ObjectId } from "mongodb";
+import { getProductsByIds } from "./products";
 
 export async function getProductReviews(
   productId: string,
-  limit = 10,
+  limit = 10
 ): Promise<Review[]> {
   const client = await clientPromise;
   const db = client.db("ecommerce");
@@ -23,7 +24,7 @@ export async function getProductReviews(
         ({
           ...review,
           _id: review._id.toString(), // Convert ObjectId to string if needed
-        }) as unknown as Review,
+        } as unknown as Review)
     );
   } catch (error) {
     console.error("Error fetching reviews:", error);
@@ -33,7 +34,7 @@ export async function getProductReviews(
 
 export async function getUserReviews(
   userId: string,
-  limit = 10,
+  limit = 10
 ): Promise<Review[]> {
   const client = await clientPromise;
   const db = client.db("ecommerce");
@@ -74,4 +75,49 @@ export async function addReview(review: Omit<Review, "_id">): Promise<boolean> {
     console.error("Error adding review:", error);
     return false;
   }
+}
+
+export async function enhanceReviewsWithProductInfo(
+  reviews: Review[]
+): Promise<Review[]> {
+  if (reviews.length === 0) return reviews;
+
+  const client = await clientPromise;
+  const db = client.db();
+
+  // Get unique product IDs
+  const productIds = [...new Set(reviews.map((review) => review.parent_asin))];
+  console.log("productIds", productIds);
+
+  // Fetch all relevant products in one query
+  const products = await getProductsByIds(productIds);
+
+  console.log("products", products);
+
+  // Create a map for quick lookup
+  const productMap = products.reduce((map, product) => {
+    // Get the first hi_res image or first large image or a placeholder
+    const productImage =
+      (product.images?.hi_res && product.images.hi_res.filter(Boolean)[0]) ||
+      (product.images?.large && product.images.large[0]) ||
+      "https://picsum.photos/200";
+
+    map[product._id] = {
+      title: product.title || "Unknown Product",
+      image: productImage,
+    };
+    return map;
+  }, {});
+
+  // Enhance each review with product information
+  const enhancedReviews = reviews.map((review) => {
+    const productInfo = productMap[review.parent_asin];
+    return {
+      ...review,
+      product_title: productInfo?.title || "Unknown Product",
+      product_image: productInfo?.image || "https://picsum.photos/200",
+    };
+  });
+
+  return enhancedReviews;
 }

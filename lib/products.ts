@@ -19,138 +19,6 @@ export async function getProducts(limit = 10, skip = 0): Promise<Product[]> {
   );
 }
 
-export async function getRecommendedProductsForUser(userId?: string): Promise<Product[]> {
-
-  try {
-    // Nếu không có userId, không trả về đề xuất nào
-    if (!userId) {
-      return []
-    }
-
-    console.log(`Fetching recommendations for user: ${userId}`)
-
-    // Trong ứng dụng thực tế:
-    // return await recommendationsConnection.query('SELECT * FROM recommendations WHERE user_id = ?', [userId])
-
-    // Mô phỏng việc lấy đề xuất dựa trên userId
-    // Trong thực tế, bạn sẽ có logic phức tạp hơn để lấy đề xuất phù hợp
-    return mockRecommendedProducts
-  } catch (error) {
-    console.error("Error fetching recommended products:", error)
-    return []
-  }
-}
-
-const mockRecommendedProducts: Product[] = [
-  {
-    _id: "1",
-    main_category: "Electronics",
-    title: "Wireless Earbuds with Charging Case",
-    average_rating: 4.6,
-    rating_number: 287,
-    features: ["Bluetooth 5.0", "Touch controls", "20-hour battery life"],
-    description: ["Experience premium sound quality with our wireless earbuds."],
-    price: "59.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "AudioTech",
-    parent_asin: "B09FGXHVDZ",
-  },
-  {
-    _id: "2",
-    main_category: "Home & Kitchen",
-    title: "Smart LED Light Bulbs (4-Pack)",
-    average_rating: 4.4,
-    rating_number: 132,
-    features: ["Voice control compatible", "Adjustable brightness", "Energy efficient"],
-    description: ["Transform your home lighting with our smart LED bulbs."],
-    price: "39.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Smart Home Solutions",
-    parent_asin: "B07WNRN9WQ",
-  },
-  {
-    _id: "3",
-    main_category: "Beauty & Personal Care",
-    title: "Natural Vitamin C Serum",
-    average_rating: 4.7,
-    rating_number: 198,
-    features: ["Anti-aging formula", "Brightens skin", "Reduces fine lines"],
-    description: ["Revitalize your skin with our powerful vitamin C serum."],
-    price: "24.99",
-    images: {
-      large: ["/placeholder.svg?height=300&width=300"],
-      thumb: ["/placeholder.svg?height=100&width=100"],
-    },
-    store: "Natural Beauty",
-    parent_asin: "B07TQNMXFR",
-  },
-]
-
-
-// export async function getRecommendedProducts(
-//   limit = 10,
-//   userId?: string
-// ): Promise<Product[]> {
-//   const client = await clientPromise;
-//   const db = client.db("ecommerce");
-//   const productsCollection = db.collection("products");
-
-//   // If userId is provided, try to get user-specific recommendations
-//   if (userId) {
-//     try {
-//       const recommendationsCollection = db.collection("recommendations");
-//       const userRecommendation = await recommendationsCollection.findOne({
-//         _id: userId,
-//       });
-
-//       if (
-//         userRecommendation &&
-//         userRecommendation.recommended_asins &&
-//         userRecommendation.recommended_asins.length > 0
-//       ) {
-//         // Use user-specific recommendations if available
-//         const productIds = userRecommendation.recommended_asins.slice(0, limit);
-
-//         const recommendedProducts = await productsCollection
-//           .find({ _id: { $in: productIds } })
-//           .toArray();
-
-//         return recommendedProducts.map(
-//           (product) =>
-//             ({
-//               ...product,
-//               _id: product._id.toString(),
-//             } as unknown as Product)
-//         );
-//       }
-//     } catch (error) {
-//       console.error("Error fetching user-specific recommendations:", error);
-//       // Fall back to default recommendations if there's an error
-//     }
-//   }
-
-//   // Default to featured/recommended products if no user-specific recommendations
-//   const recommendedProducts = await productsCollection
-//     .find({
-//       $or: [{ featured: true }, { recommended: true }],
-//     })
-//     .limit(limit)
-//     .toArray();
-
-//   return recommendedProducts.map(
-//     (product) =>
-//       ({
-//         ...product,
-//         _id: product._id.toString(),
-//       } as unknown as Product)
-//   );
-// }
 export async function getProductById(id: string): Promise<Product | null> {
   const client = await clientPromise;
   const db = client.db("ecommerce");
@@ -184,44 +52,162 @@ export async function getProductById(id: string): Promise<Product | null> {
   }
 }
 
-// New function to get recommended products for a specific product
-export async function getRecommendedProductsById(
-  id: string,
-  limit = 10
-): Promise<Product[]> {
+// Hàm lấy đề xuất từ recommendations collection
+export async function getRecommendationsForUser(userId: string): Promise<string[]> {
+  if (!userId) return [];
+  
   const client = await clientPromise;
   const db = client.db("ecommerce");
-  const recommendationsCollection = db.collection("recommendations");
-  const productsCollection = db.collection("products");
-
+  
   try {
-    // Find recommendations for this product
-    const recommendation = await recommendationsCollection.findOne({ _id: id });
-
-    if (
-      !recommendation ||
-      !recommendation.recommended_asins ||
-      recommendation.recommended_asins.length === 0
-    ) {
+    const recommendation = await db.collection("recommendations").findOne({ _id: userId });
+    
+    if (!recommendation || !recommendation.recommended_asins) {
       return [];
     }
+    
+    return recommendation.recommended_asins;
+  } catch (error) {
+    console.error("Error fetching recommendations:", error);
+    return [];
+  }
+}
 
-    // Fetch the recommended products (limited to specified number)
-    const recommendedAsins = recommendation.recommended_asins.slice(0, limit);
-
-    const recommendedProducts = await productsCollection
-      .find({ _id: { $in: recommendedAsins } })
+// Hàm lấy sản phẩm đề xuất cho người dùng
+export async function getRecommendedProductsForUser(
+  userId: string, 
+  page = 1, 
+  limit = 8
+): Promise<Product[]> {
+  if (!userId) return [];
+  
+  const skip = (page - 1) * limit;
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  
+  try {
+    // 1. Lấy danh sách các ASIN đề xuất cho người dùng
+    const recommendedAsins = await getRecommendationsForUser(userId);
+    
+    if (recommendedAsins.length === 0) {
+      return [];
+    }
+    
+    // 2. Lấy thông tin chi tiết của các sản phẩm từ danh sách ASIN
+    // Chỉ lấy một phần theo page và limit
+    const paginatedAsins = recommendedAsins.slice(skip, skip + limit);
+    
+    if (paginatedAsins.length === 0) {
+      return [];
+    }
+    
+    const products = await db.collection("products")
+      .find({ _id: { $in: paginatedAsins } })
       .toArray();
-
-    return recommendedProducts.map(
-      (product) =>
-        ({
-          ...product,
-          _id: product._id.toString(),
-        } as unknown as Product)
-    );
+      
+    // Sắp xếp lại theo thứ tự trong recommendedAsins
+    const productMap = new Map();
+    products.forEach(product => {
+      productMap.set(product._id.toString(), {
+        ...product,
+        _id: product._id.toString()
+      });
+    });
+    
+    // Lấy sản phẩm theo đúng thứ tự trong recommendedAsins
+    return paginatedAsins
+      .map(asin => productMap.get(asin))
+      .filter(product => !!product); // Loại bỏ sản phẩm null/undefined
   } catch (error) {
     console.error("Error fetching recommended products:", error);
+    return [];
+  }
+}
+
+// Hàm lấy danh sách ID của các sản phẩm liên quan
+export async function getRelatedProductIds(productId: string): Promise<string[]> {
+  if (!productId) return [];
+  
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  
+  try {
+    const relatedEntry = await db.collection("related_products").findOne({ _id: productId });
+    
+    if (!relatedEntry || !relatedEntry.related_asins) {
+      return [];
+    }
+    
+    return relatedEntry.related_asins;
+  } catch (error) {
+    console.error("Error fetching related product IDs:", error);
+    return [];
+  }
+}
+
+// Hàm lấy sản phẩm liên quan dựa trên ID sản phẩm
+export async function getRelatedProducts(
+  productId: string, 
+  limit = 4
+): Promise<Product[]> {
+  if (!productId) return [];
+  
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  
+  try {
+    // 1. Lấy danh sách IDs các sản phẩm liên quan
+    const relatedIds = await getRelatedProductIds(productId);
+    
+    if (relatedIds.length === 0) {
+      return [];
+    }
+    
+    // 2. Lấy thông tin chi tiết của các sản phẩm liên quan
+    // Giới hạn số lượng theo limit
+    const limitedIds = relatedIds.slice(0, limit);
+    
+    const products = await db.collection("products")
+      .find({ _id: { $in: limitedIds } })
+      .toArray();
+      
+    // Sắp xếp lại theo thứ tự trong relatedIds
+    const productMap = new Map();
+    products.forEach(product => {
+      productMap.set(product._id.toString(), {
+        ...product, 
+        _id: product._id.toString()
+      });
+    });
+    
+    // Lấy sản phẩm theo đúng thứ tự trong relatedIds
+    return limitedIds
+      .map(id => productMap.get(id))
+      .filter(product => !!product); // Loại bỏ sản phẩm null/undefined
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    return [];
+  }
+}
+
+// Hàm lấy nhiều sản phẩm theo danh sách ID
+export async function getProductsByIds(productIds: string[]): Promise<Product[]> {
+  if (!productIds || productIds.length === 0) return [];
+  
+  const client = await clientPromise;
+  const db = client.db("ecommerce");
+  
+  try {
+    const products = await db.collection("products")
+      .find({ _id: { $in: productIds } })
+      .toArray();
+      
+    return products.map(product => ({
+      ...product,
+      _id: product._id.toString()
+    })) as Product[];
+  } catch (error) {
+    console.error("Error fetching products by IDs:", error);
     return [];
   }
 }

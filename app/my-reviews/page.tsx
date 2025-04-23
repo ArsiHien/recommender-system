@@ -7,9 +7,10 @@ import Link from "next/link";
 import { Star, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ObjectId } from "mongodb";
 
 interface UserReview {
-  review_id: number;
+  _id: ObjectId;
   parent_asin: string;
   user_id: string;
   rating: number;
@@ -97,7 +98,7 @@ export default function MyReviewsPage() {
 
       <div className="space-y-6">
         {reviews.map((review) => (
-          <Card key={review.review_id} className="overflow-hidden">
+          <Card key={review._id.toString()} className="overflow-hidden">
             <div className="flex flex-col md:flex-row">
               <div className="w-full md:w-1/4 p-4">
                 <Link href={`/product/${review.parent_asin}`}>

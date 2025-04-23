@@ -1,4 +1,4 @@
-import { getProductReviews, addReview, getUserReviews } from "@/lib/reviews"
+import { getProductReviews, addReview, getUserReviews, enhanceReviewsWithProductInfo } from "@/lib/reviews"
 import { type NextRequest, NextResponse } from "next/server"
 import type { Review } from "@/types/review"
 
@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
       reviews = await getUserReviews(userId);
     }
 
-    return NextResponse.json(reviews)
+    const enhancedReviews = await enhanceReviewsWithProductInfo(reviews);
+
+
+    return NextResponse.json(enhancedReviews)
   } catch (error) {
     console.error("Error fetching reviews:", error)
     return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 })
