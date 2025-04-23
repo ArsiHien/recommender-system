@@ -8,15 +8,58 @@ import { Button } from "@/components/ui/button";
 import { getProductById } from "@/lib/products";
 import { ReviewList } from "@/components/review-list";
 import { AddReviewForm } from "@/components/add-review-form";
+import { Metadata } from "next";
 
+// Define props type
 interface ProductPageProps {
-  params: {
-    id: string;
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+// Generate dynamic metadata
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProductById(id);
+
+  if (!product) {
+    return {
+      title: "Product Not Found",
+      description: "The requested product could not be found.",
+    };
+  }
+
+  return {
+    title: product.title,
+    description:
+      product.subtitle ||
+      product.description?.[0] ||
+      "View this product on our store.",
+    openGraph: {
+      title: product.title,
+      description:
+        product.subtitle ||
+        product.description?.[0] ||
+        "View this product on our store.",
+      images: [
+        {
+          url:
+            product.images?.hi_res?.filter(Boolean)[0] ||
+            product.images?.large?.[0] ||
+            "/placeholder.svg",
+          width: 600,
+          height: 600,
+          alt: product.title,
+        },
+      ],
+    },
   };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getProductById(params.id);
+  const { id } = await params;
+  const product = await getProductById(id);
 
   if (!product) {
     notFound();
@@ -56,6 +99,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               width={600}
               height={600}
               className="h-full w-full object-contain"
+              priority // Improve LCP
             />
           </div>
 
@@ -186,8 +230,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </TabsContent>
         <TabsContent value="reviews" className="py-4">
           <div className="space-y-8">
-            <AddReviewForm productId={params.id} />
-            <ReviewList productId={params.id} />
+            <AddReviewForm productId={id} />
+            <ReviewList productId={id} />
           </div>
         </TabsContent>
       </Tabs>
