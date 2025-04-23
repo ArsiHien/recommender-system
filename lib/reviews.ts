@@ -1,6 +1,5 @@
 import type { Review } from "@/types/review";
 import clientPromise from "./db";
-import { ObjectId } from "mongodb";
 import { getProductsByIds } from "./products";
 
 export async function getProductReviews(
@@ -81,9 +80,6 @@ export async function enhanceReviewsWithProductInfo(
   reviews: Review[]
 ): Promise<Review[]> {
   if (reviews.length === 0) return reviews;
-
-  const client = await clientPromise;
-  const db = client.db();
 
   // Get unique product IDs
   const productIds = [...new Set(reviews.map((review) => review.parent_asin))];

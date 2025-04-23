@@ -85,7 +85,7 @@ export default function MyReviewsPage() {
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold mb-4">My Reviews</h1>
         <p className="text-muted-foreground mb-6">
-          You haven't written any reviews yet.
+          You haven&apos;t written any reviews yet.
         </p>
         <Button onClick={() => router.push("/")}>Browse Products</Button>
       </div>

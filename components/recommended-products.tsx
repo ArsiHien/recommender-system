@@ -6,6 +6,7 @@ import type { Product } from "@/types/product";
 
 export function RecommendedProducts() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userId, setUserId] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
