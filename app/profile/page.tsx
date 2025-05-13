@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { getUserReviews } from "@/lib/reviews";
-import { getUserRecommendations } from "@/lib/recommendations";
+import {
+  getCollaborativeRecommendations,
+  getContentBasedRecommendations,
+} from "@/lib/recommendations";
 import { getUser } from "@/lib/auth";
 import ItemCard from "@/components/item-card";
 import UserReviewsList from "@/components/user-reviews-list";
@@ -20,9 +23,10 @@ export default async function ProfilePage() {
   }
 
   // Fetch reviews and recommendations
-  const [reviewsData, recommendationsData] = await Promise.all([
+  const [reviewsData, collaborativeRecs, contentBasedRecs] = await Promise.all([
     getUserReviews(user.user_index),
-    getUserRecommendations(user.user_index),
+    getCollaborativeRecommendations(user.user_index),
+    getContentBasedRecommendations(user.user_index),
   ]);
 
   // Ensure reviews are of the correct type by filtering and casting
@@ -35,13 +39,17 @@ export default async function ProfilePage() {
     : [];
 
   // Ensure recommendations are of the correct type
-  const recommendations: Item[] = Array.isArray(recommendationsData)
-    ? recommendationsData
-        .filter(
-          (item) => item && typeof item === "object" && "item_index" in item
-        )
-        .map((item) => (isValidItem(item) ? item : castToItem(item)))
-    : [];
+  const processItems = (data: any[]): Item[] =>
+    Array.isArray(data)
+      ? data
+          .filter(
+            (item) => item && typeof item === "object" && "item_index" in item
+          )
+          .map((item) => (isValidItem(item) ? item : castToItem(item)))
+      : [];
+
+  const collaborativeRecommendations = processItems(collaborativeRecs);
+  const contentBasedRecommendations = processItems(contentBasedRecs);
 
   // If reviews exist but don't have item data, fetch the items directly
   let processedReviews = [...reviews];
@@ -102,18 +110,21 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="recommendations">
+        <Tabs defaultValue="collaborative">
           <TabsList className="mb-4">
-            <TabsTrigger value="recommendations">
-              Your Recommendations
+            <TabsTrigger value="collaborative">
+              Your Collaborative Recommendations
+            </TabsTrigger>
+            <TabsTrigger value="content-based">
+              Your Content-Based Recommendations
             </TabsTrigger>
             <TabsTrigger value="reviews">Your Reviews</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="recommendations">
-            {recommendations.length > 0 ? (
+          <TabsContent value="collaborative">
+            {collaborativeRecommendations.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {recommendations.map((item) => (
+                {collaborativeRecommendations.map((item) => (
                   <ItemCard key={item.item_index} item={item} />
                 ))}
               </div>
@@ -121,7 +132,25 @@ export default async function ProfilePage() {
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-muted-foreground">
-                    No recommendations found.
+                    No collaborative recommendations found.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="content-based">
+            {contentBasedRecommendations.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {contentBasedRecommendations.map((item) => (
+                  <ItemCard key={item.item_index} item={item} />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-muted-foreground">
+                    No content-based recommendations found.
                   </p>
                 </CardContent>
               </Card>

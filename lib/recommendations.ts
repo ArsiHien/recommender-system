@@ -1,3 +1,13 @@
-import { getUserRecommendations, getRelatedItems } from "./data-service"
+import {
+  getUserRecommendations,
+  getRelatedItems,
+  getCollaborativeRecommendations,
+  getContentBasedRecommendations,
+} from "./data-service";
 
-export { getUserRecommendations, getRelatedItems }
+export {
+  getUserRecommendations,
+  getRelatedItems,
+  getCollaborativeRecommendations,
+  getContentBasedRecommendations,
+};

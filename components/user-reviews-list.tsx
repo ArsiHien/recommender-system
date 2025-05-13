@@ -109,9 +109,12 @@ export default function UserReviewsList({ reviews }: { reviews: Review[] }) {
                 </span>
               </div>
 
-              <Badge variant="outline" className="text-xs">
-                Product #{review.item_index}
-              </Badge>
+              {hasValidItem && review.item?.rating_number && (
+                <Badge variant="outline" className="text-xs">
+                  {review.item?.rating_number}{" "}
+                  {review.item?.rating_number == 1 ? " review" : " reviews"}
+                </Badge>
+              )}
             </CardContent>
           </Card>
         );

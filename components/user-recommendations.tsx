@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getUser } from "@/lib/auth";
-import { getUserRecommendations } from "@/lib/recommendations";
+import {
+  getCollaborativeRecommendations,
+  getContentBasedRecommendations,
+} from "@/lib/recommendations";
 import ItemCard from "@/components/item-card";
 import LoadingItems from "@/components/loading-items";
 import { isValidItem, castToItem } from "@/lib/items";
@@ -27,38 +30,65 @@ export default async function UserRecommendations() {
           View all <ArrowRight className="ml-1 h-4 w-4" />
         </Link>
       </div>
+
       <Suspense fallback={<LoadingItems count={4} />}>
-        <RecommendationsList userIndex={user.user_index} />
+        <RecommendationsGroup userIndex={user.user_index} />
       </Suspense>
     </section>
   );
 }
 
-async function RecommendationsList({ userIndex }: { userIndex: number }) {
-  const recommendationsData = await getUserRecommendations(userIndex);
+async function RecommendationsGroup({ userIndex }: { userIndex: number }) {
+  const [collaborativeData, contentBasedData] = await Promise.all([
+    getCollaborativeRecommendations(userIndex),
+    getContentBasedRecommendations(userIndex),
+  ]);
 
-  // Filter to ensure only valid items are used
-  const recommendations: Item[] = recommendationsData
-    .filter(
-      (item) =>
-        isValidItem(item) ||
-        (item && typeof item === "object" && "item_index" in item)
-    )
-    .map((item) => (isValidItem(item) ? item : castToItem(item)));
+  const toItems = (data: any[]): Item[] =>
+    data
+      .filter(
+        (item) =>
+          isValidItem(item) ||
+          (item && typeof item === "object" && "item_index" in item)
+      )
+      .map((item) => (isValidItem(item) ? item : castToItem(item)));
 
-  if (recommendations.length === 0) {
-    return (
-      <p className="text-muted-foreground">
-        No recommendations found for you yet.
-      </p>
-    );
-  }
+  const collaborative = toItems(collaborativeData);
+  const contentBased = toItems(contentBasedData);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {recommendations.map((item) => (
-        <ItemCard key={item.item_index} item={item} />
-      ))}
+    <div className="space-y-10">
+      <RecommendationSection
+        title="Collaborative Recommendations"
+        items={collaborative}
+      />
+      <RecommendationSection
+        title="Content-Based Recommendations"
+        items={contentBased}
+      />
+    </div>
+  );
+}
+
+function RecommendationSection({
+  title,
+  items,
+}: {
+  title: string;
+  items: Item[];
+}) {
+  return (
+    <div>
+      <h3 className="text-xl font-semibold mb-4">{title}</h3>
+      {items.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {items.map((item) => (
+            <ItemCard key={item.item_index} item={item} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground">No {title.toLowerCase()} found.</p>
+      )}
     </div>
   );
 }

@@ -198,6 +198,81 @@ export async function getUserRecommendations(userIndex: number) {
   }
 }
 
+export async function getCollaborativeRecommendations(userIndex: number) {
+  if (USE_MOCK_DATA) {
+    const prediction = predictions.find((p) => p.user_index === userIndex);
+
+    if (
+      !prediction ||
+      !prediction.recommendation ||
+      prediction.recommendation.length === 0
+    ) {
+      return [];
+    }
+
+    return items.filter((item) =>
+      prediction.recommendation.includes(item.item_index)
+    );
+  } else {
+    const { db } = await connectToDatabase();
+
+    // Get collaborative filtering recommendations from predicts collection
+    const predict = await db
+      .collection("predicts")
+      .findOne({ user_index: userIndex });
+
+    if (
+      !predict ||
+      !predict.recommendation ||
+      predict.recommendation.length === 0
+    ) {
+      return [];
+    }
+
+    return db
+      .collection("items")
+      .find({ item_index: { $in: predict.recommendation } })
+      .toArray();
+  }
+}
+
+export async function getContentBasedRecommendations(userIndex: number) {
+  if (USE_MOCK_DATA) {
+    const prediction = predictions.find((p) => p.user_index === userIndex);
+
+    if (
+      !prediction ||
+      !prediction.recommendation ||
+      prediction.recommendation.length === 0
+    ) {
+      return [];
+    }
+
+    return items.filter((item) =>
+      prediction.recommendation.includes(item.item_index)
+    );
+  } else {
+    const { db } = await connectToDatabase();
+
+    const predict = await db
+      .collection("cb_predicts")
+      .findOne({ user_index: userIndex });
+
+    if (
+      !predict ||
+      !predict.recommendation ||
+      predict.recommendation.length === 0
+    ) {
+      return [];
+    }
+
+    return db
+      .collection("items")
+      .find({ item_index: { $in: predict.recommendation } })
+      .toArray();
+  }
+}
+
 export async function getRelatedItems(itemIndex: number) {
   if (USE_MOCK_DATA) {
     const itemRecommend = itemRecommendations.find(
