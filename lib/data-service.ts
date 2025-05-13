@@ -255,7 +255,7 @@ export async function getContentBasedRecommendations(userIndex: number) {
     const { db } = await connectToDatabase();
 
     const predict = await db
-      .collection("cb_predicts")
+      .collection("cb_predict")
       .findOne({ user_index: userIndex });
 
     if (
