@@ -8,6 +8,24 @@ import { itemRecommendations } from "./mock-data/item-recommend";
 // Set this to false to use MongoDB instead of mock data
 const USE_MOCK_DATA = false;
 
+// Utility function to remove duplicate items by item_index
+export function removeDuplicateItems<T extends Record<string, any>>(
+  items: T[]
+): T[] {
+  if (!items || items.length === 0) return items;
+
+  const uniqueItems = new Map<number, T>();
+
+  items.forEach((item) => {
+    const itemIndex = item.item_index;
+    if (itemIndex !== undefined && !uniqueItems.has(itemIndex)) {
+      uniqueItems.set(itemIndex, item);
+    }
+  });
+
+  return uniqueItems.size > 0 ? Array.from(uniqueItems.values()) : items;
+}
+
 export async function getItems(page = 1, limit = 12, category?: string) {
   if (USE_MOCK_DATA) {
     const filteredItems = category
@@ -15,19 +33,21 @@ export async function getItems(page = 1, limit = 12, category?: string) {
       : items;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    return filteredItems.slice(startIndex, endIndex);
+    return removeDuplicateItems(filteredItems.slice(startIndex, endIndex));
   } else {
     const { db } = await connectToDatabase();
     const query = category ? { main_category: category } : {};
     const skip = (page - 1) * limit;
 
-    return db
+    const result = await db
       .collection("items")
       .find(query)
       .sort({ rating_number: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
+
+    return removeDuplicateItems(result);
   }
 }
 
@@ -56,17 +76,19 @@ export async function getItemByIndex(itemIndex: number) {
 export async function getFeaturedItems(limit = 4) {
   if (USE_MOCK_DATA) {
     // Sort by rating_number and return top items
-    return [...items]
+    const result = [...items]
       .sort((a, b) => b.rating_number - a.rating_number)
       .slice(0, limit);
+    return removeDuplicateItems(result);
   } else {
     const { db } = await connectToDatabase();
-    return db
+    const result = await db
       .collection("items")
       .find({})
       .sort({ rating_number: -1 })
       .limit(limit)
       .toArray();
+    return removeDuplicateItems(result);
   }
 }
 
@@ -128,9 +150,12 @@ export async function getUserReviews(userIndex: number) {
         .find({ item_index: { $in: itemIndexes } })
         .toArray();
 
+      // Remove duplicate items if any
+      const uniqueItemsData = removeDuplicateItems(itemsData);
+
       // Create a map for quick lookup
       const itemsMap: Record<number, any> = {};
-      itemsData.forEach((item) => {
+      uniqueItemsData.forEach((item) => {
         if (item && item.item_index) {
           itemsMap[item.item_index] = item;
         }
@@ -165,9 +190,10 @@ export async function getUserRecommendations(userIndex: number) {
       return [];
     }
 
-    return items.filter((item) =>
+    const result = items.filter((item) =>
       prediction.recommendation.includes(item.item_index)
     );
+    return removeDuplicateItems(result);
   } else {
     const { db } = await connectToDatabase();
 
@@ -191,10 +217,12 @@ export async function getUserRecommendations(userIndex: number) {
       return [];
     }
 
-    return db
+    const result = await db
       .collection("items")
       .find({ item_index: { $in: predict.recommendation } })
       .toArray();
+
+    return removeDuplicateItems(result);
   }
 }
 
@@ -210,9 +238,10 @@ export async function getCollaborativeRecommendations(userIndex: number) {
       return [];
     }
 
-    return items.filter((item) =>
+    const result = items.filter((item) =>
       prediction.recommendation.includes(item.item_index)
     );
+    return removeDuplicateItems(result);
   } else {
     const { db } = await connectToDatabase();
 
@@ -229,10 +258,12 @@ export async function getCollaborativeRecommendations(userIndex: number) {
       return [];
     }
 
-    return db
+    const result = await db
       .collection("items")
       .find({ item_index: { $in: predict.recommendation } })
       .toArray();
+
+    return removeDuplicateItems(result);
   }
 }
 
@@ -248,9 +279,10 @@ export async function getContentBasedRecommendations(userIndex: number) {
       return [];
     }
 
-    return items.filter((item) =>
+    const result = items.filter((item) =>
       prediction.recommendation.includes(item.item_index)
     );
+    return removeDuplicateItems(result);
   } else {
     const { db } = await connectToDatabase();
 
@@ -266,10 +298,12 @@ export async function getContentBasedRecommendations(userIndex: number) {
       return [];
     }
 
-    return db
+    const result = await db
       .collection("items")
       .find({ item_index: { $in: predict.recommendation } })
       .toArray();
+
+    return removeDuplicateItems(result);
   }
 }
 
@@ -287,9 +321,10 @@ export async function getRelatedItems(itemIndex: number) {
       return [];
     }
 
-    return items.filter((item) =>
+    const result = items.filter((item) =>
       itemRecommend.recommendation.includes(item.item_index)
     );
+    return removeDuplicateItems(result);
   } else {
     const { db } = await connectToDatabase();
     const itemRecommend = await db
@@ -304,10 +339,12 @@ export async function getRelatedItems(itemIndex: number) {
       return [];
     }
 
-    return db
+    const result = await db
       .collection("items")
       .find({ item_index: { $in: itemRecommend.recommendation } })
       .toArray();
+
+    return removeDuplicateItems(result);
   }
 }
 
@@ -322,7 +359,8 @@ export async function searchItems(query: string, page = 1, limit = 12) {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
 
-    return filteredItems.slice(startIndex, endIndex);
+    const result = filteredItems.slice(startIndex, endIndex);
+    return removeDuplicateItems(result);
   } else {
     const { db } = await connectToDatabase();
 
@@ -336,13 +374,15 @@ export async function searchItems(query: string, page = 1, limit = 12) {
 
     const skip = (page - 1) * limit;
 
-    return db
+    const result = await db
       .collection("items")
       .find(searchQuery)
       .sort({ rating_number: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
+
+    return removeDuplicateItems(result);
   }
 }
 
